@@ -240,10 +240,10 @@ interface Phase {
   exerciseId?: ID;
   label: string;            // big word on screen: "WORK", "REST", "GET READY"
   section: 'warmup' | 'circuit' | 'cooldown';
-  blockIndex?: number; blocksTotal?: number;
-  round?: number; roundsTotal?: number;
-  station?: number; stationsTotal?: number;
-  next?: { exerciseId?: ID; label: string; durationSec: number };
+  blockIndex?: number; blocksTotal?: number;   // blockIndex is 0-based
+  round?: number; roundsTotal?: number;        // 1-based
+  station?: number; stationsTotal?: number;    // 1-based
+  next?: { exerciseId?: ID; label: string; durationSec: number }; // next EXERCISE phase (or done)
 }
 ```
 
@@ -251,17 +251,18 @@ Order:
 
 1. `prepare` (if `prepareSec` > 0).
 2. Warm-up items. Each item is a `warmup` phase. A `transition` phase goes between items.
-3. A `transition` phase into the circuit (use `prepareSec`).
+3. A `transition` phase into the circuit (use `prepareSec`). Only if there is a warm-up; without one, `prepare` already does this job.
 4. For each block, for each round, for each station: a `work` phase, then a rest:
    - Not the last station of the round → `rest` (`station.restSec`).
    - Last station, not the last round → `roundRest` (`restBetweenRoundsSec`).
    - Last station, last round, not the last block → `blockRest` (`restBetweenBlocksSec`).
    - Last station, last round, last block → no rest.
-5. A `transition` into the cool-down, then cool-down items as `cooldown` phases with `transition` phases between.
+5. A `transition` into the cool-down (the cool-down's `transitionSec`), then cool-down items as `cooldown` phases with `transition` phases between.
 6. `done`.
 
 Skip any phase with duration 0.
-Every phase carries `next` so the screen can show the preview.
+Every phase carries `next` so the screen can show the preview. `next` skips rests and transitions: during work it names the next exercise.
+Code: `src/engine/timeline.ts` (build) and `src/engine/runner.ts` (run state, controls, resume after reload). `+10 s` time is not saved in `ActiveSession`; after a reload, skip back counts from the original rest length.
 
 ### 6.2 Run the timeline
 
