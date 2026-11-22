@@ -548,7 +548,7 @@ Commit to git at the end of each stage.
 | Assumption | Check | Fallback |
 |---|---|---|
 | Screen Wake Lock works in a home-screen web app on Jim's iOS version. | Stage 1, 10-minute test. | Ask Jim to set Auto-Lock to "Never" during workouts, or use a muted looping video (NoSleep pattern). |
-| Beeps play with the silent switch on. | Stage 1. | Set `navigator.audioSession.type = 'playback'` where supported, or play beeps through an `<audio>` element. |
+| Beeps play with the silent switch on. | Stage 1: confirmed (Web Audio beeps + `audioSession.type = 'playback'`). The voice did NOT play on silent. | Jim decided (2026-11-22): keep the switch on ring when training. The app keeps a silent keep-alive loop that may let the voice through; not required, not tested. |
 | Speech plays after the first tap. | Stage 1: confirmed on Jim's iPhone (2026-11-22). | Speak the real first words inside the Start tap. Do NOT speak a blank " " utterance first: on the iPhone it blocked all speech. Set an explicit voice. |
 | Home-screen web app data is not cleared by Safari's storage limits. | Check current WebKit policy. | Backup export. Remind Jim to export monthly (Settings shows "last backup" date). |
 | Starter exercise cues and times suit Jim and his son. | Jim reviews Section 9. | Edit in the library. |
