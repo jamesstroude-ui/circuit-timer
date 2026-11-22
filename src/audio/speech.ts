@@ -26,18 +26,40 @@ function norm(lang: string): string {
   return lang.replace('_', '-').toLowerCase();
 }
 
+// Best sound first: Premium, then Enhanced, then the basic (compact) voice.
+function quality(v: SpeechSynthesisVoice): number {
+  const id = v.voiceURI.toLowerCase();
+  if (id.includes('premium')) return 0;
+  if (id.includes('enhanced')) return 1;
+  return 2;
+}
+
+function byLang(lang: string): SpeechSynthesisVoice[] {
+  return window.speechSynthesis
+    .getVoices()
+    .filter((v) => norm(v.lang) === lang)
+    .sort((a, b) => quality(a) - quality(b));
+}
+
+/** Australian English first (Jim asked for it), then British, then any English. */
 function pickVoice(): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
-  const gb = voices.filter((v) => norm(v.lang) === 'en-gb');
-  const en = voices.filter((v) => norm(v.lang).startsWith('en'));
   return (
-    gb.find((v) => v.localService) ??
-    gb[0] ??
-    en.find((v) => v.localService) ??
-    en[0] ??
+    byLang('en-au')[0] ??
+    byLang('en-gb')[0] ??
+    voices.find((v) => norm(v.lang).startsWith('en')) ??
     voices.find((v) => v.default) ??
     null
   );
+}
+
+/** For the check panel: every Australian voice this phone has. */
+export function aussieVoices(): string {
+  if (!speechSupported()) return 'none';
+  const list = byLang('en-au');
+  if (!list.length) return 'none installed';
+  const tag = (v: SpeechSynthesisVoice) => ['premium', 'enhanced', 'basic'][quality(v)];
+  return list.map((v) => `${v.name} (${tag(v)})`).join(', ');
 }
 
 export function voiceName(): string {

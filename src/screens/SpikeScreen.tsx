@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cuesBetween, formatMs, loopState, type LoopState } from '../engine/spikeLoop';
 import { audioContextState, beep, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
-import { cancelSpeech, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
+import { aussieVoices, cancelSpeech, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
 import { startWakeLock, stopWakeLock, wakeLockSupported } from '../audio/wakeLock';
 import './spike.css';
 
@@ -173,6 +173,7 @@ export function SpikeScreen() {
           <dt>Web Audio</dt><dd>{audioContextState()}</dd>
           <dt>Speech</dt><dd>{speechSupported() ? `yes (${voiceCount()} voices)` : 'not supported'}</dd>
           <dt>Voice used</dt><dd>{voiceName()}</dd>
+          <dt>Aussie voices</dt><dd>{aussieVoices()}</dd>
         </dl>
         <h2>Log</h2>
         <ol className="log">{log.length ? log.map((l, i) => <li key={i}>{l}</li>) : <li>No events yet.</li>}</ol>

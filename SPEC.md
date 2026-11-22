@@ -202,7 +202,7 @@ interface Settings {
   defaultRestSec: number;          // 20
   defaultPrepareSec: number;       // 10
   voiceOn: boolean;                // true
-  voiceName?: string;              // chosen system voice
+  voiceName?: string;              // chosen system voice; if unset, best en-AU voice, then en-GB
   voiceRate: number;               // 1.0
   beepsOn: boolean;                // true
   countdownBeepsSec: number;       // 3
@@ -549,7 +549,7 @@ Commit to git at the end of each stage.
 |---|---|---|
 | Screen Wake Lock works in a home-screen web app on Jim's iOS version. | Stage 1, 10-minute test. | Ask Jim to set Auto-Lock to "Never" during workouts, or use a muted looping video (NoSleep pattern). |
 | Beeps play with the silent switch on. | Stage 1. | Set `navigator.audioSession.type = 'playback'` where supported, or play beeps through an `<audio>` element. |
-| Speech plays after the first tap. | Stage 1. | Speak a silent utterance inside the Start tap handler to unlock it. |
+| Speech plays after the first tap. | Stage 1: confirmed on Jim's iPhone (2026-11-22). | Speak the real first words inside the Start tap. Do NOT speak a blank " " utterance first: on the iPhone it blocked all speech. Set an explicit voice. |
 | Home-screen web app data is not cleared by Safari's storage limits. | Check current WebKit policy. | Backup export. Remind Jim to export monthly (Settings shows "last backup" date). |
 | Starter exercise cues and times suit Jim and his son. | Jim reviews Section 9. | Edit in the library. |
 
