@@ -543,11 +543,22 @@ Commit to git at the end of each stage.
 - Data stays on this one phone. No sync.
 - A web app cannot write to Apple Health or vibrate an iPhone.
 
+### Stage 1 iPhone results (2026-11-22, Jim's iPhone, home-screen app)
+
+All four "done when" checks passed. Code: `src/audio/`.
+
+- **Screen on:** Screen Wake Lock kept the screen on for a full 10-minute run (Auto-Lock not on Never). No "App hidden" events.
+- **Offline:** the app opens and runs with flight mode on and Wi-Fi off.
+- **Voice:** works. Default voice is Karen (en-AU, basic). Rules: speak the real first words inside the Start tap; never a blank " " utterance; set an explicit voice; wait ~100 ms after `cancel()` before `speak()`.
+- **Voice mutes the rest:** each spoken line makes iOS stop the page's other audio (Web Audio goes "interrupted", media elements pause). The app must, after every utterance ends: replay the silent keep-alive `<audio>` loop, and `suspend()` then `resume()` the AudioContext. Beep before speaking when both fall on the same moment. Without this, beeps stop after the first voice line.
+- **Silent switch:** Web Audio beeps play on silent. The voice does not. Jim keeps the switch on ring when training.
+- **Beep method:** Web Audio (the `<audio>` element method also works; keep it as the fallback).
+
 ### Assumptions (verify in Stage 1)
 
 | Assumption | Check | Fallback |
 |---|---|---|
-| Screen Wake Lock works in a home-screen web app on Jim's iOS version. | Stage 1, 10-minute test. | Ask Jim to set Auto-Lock to "Never" during workouts, or use a muted looping video (NoSleep pattern). |
+| Screen Wake Lock works in a home-screen web app on Jim's iOS version. | Stage 1: confirmed, 10-minute test passed (2026-11-22). | Ask Jim to set Auto-Lock to "Never" during workouts, or use a muted looping video (NoSleep pattern). |
 | Beeps play with the silent switch on. | Stage 1: confirmed (Web Audio beeps + `audioSession.type = 'playback'`). The voice did NOT play on silent. | Jim decided (2026-11-22): keep the switch on ring when training. The app keeps a silent keep-alive loop that may let the voice through; not required, not tested. |
 | Speech plays after the first tap. | Stage 1: confirmed on Jim's iPhone (2026-11-22). | Speak the real first words inside the Start tap. Do NOT speak a blank " " utterance first: on the iPhone it blocked all speech. Set an explicit voice. |
 | Home-screen web app data is not cleared by Safari's storage limits. | Check current WebKit policy. | Backup export. Remind Jim to export monthly (Settings shows "last backup" date). |
