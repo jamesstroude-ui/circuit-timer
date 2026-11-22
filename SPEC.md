@@ -98,7 +98,7 @@ It records what each person lifted.
 | Speech | Web Speech API (`speechSynthesis`) | Built into Safari. |
 | Beeps | Web Audio API (oscillator) | No audio files to load. |
 | Screen on | Screen Wake Lock API | Re-request on `visibilitychange`. |
-| Font | Bebas Neue (or similar condensed bold, open licence), self-hosted | Must work offline. No CDN. |
+| Font | iPhone system condensed bold (`HelveticaNeue-CondensedBold`). Jim decided (2026-11-22): no Bebas Neue, the system font is fine. | Built into iOS: works offline, no download, no new dependency. |
 | Hosting | GitHub Pages or Netlify (free) | HTTPS is required for the service worker and wake lock. |
 
 Rules:
