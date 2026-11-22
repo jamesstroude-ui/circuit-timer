@@ -530,6 +530,10 @@ Commit to git at the end of each stage.
   in Stages 6 and 7). The Workouts tab is a plain list of the saved workouts until Stage 5.
   The routine editor includes a basic exercise picker (search, category, "+ New exercise");
   Stage 5 adds "recent first". Confirms use the phone's own dialogs until Stage 7.
+- iPhone tests (2026-11-22): edits survive close and reopen (done-when check passed); warm-up edits,
+  new exercise from the picker, live totals, delete blocked while used, player uses the edits,
+  resume after reload all passed. One delete looked like it failed; the exercise was gone on
+  re-check and the browser could not reproduce it (Jim: likely a wrong tap on the warning). DONE.
 
 ### Stage 5 — Workout builder
 
