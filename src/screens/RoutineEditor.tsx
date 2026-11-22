@@ -46,10 +46,10 @@ export function RoutineEditor({ id, kind, onDone, onOpen }: Props) {
   if (picking) {
     return (
       <ExercisePicker
-        title="Add exercise"
+        title="Add exercises"
         onCancel={() => setPicking(false)}
-        onPick={(exId) => {
-          setItems([...r.items, { exerciseId: exId, workSec: DEFAULT_ITEM_SEC }]);
+        onPick={(ids) => {
+          setItems([...r.items, ...ids.map((exerciseId) => ({ exerciseId, workSec: DEFAULT_ITEM_SEC }))]);
           setPicking(false);
         }}
       />

@@ -18,6 +18,7 @@ import { WorkoutsScreen } from './screens/WorkoutsScreen';
 import { LibraryScreen, type LibTab } from './screens/LibraryScreen';
 import { ExerciseEditor } from './screens/ExerciseEditor';
 import { RoutineEditor } from './screens/RoutineEditor';
+import { WorkoutEditor } from './screens/WorkoutEditor';
 import { clock } from './screens/format';
 
 type Tab = 'workouts' | 'library';
@@ -27,7 +28,8 @@ type View =
   | { name: 'start'; workoutId: ID; notice?: string }
   | { name: 'player'; workoutId: ID; run: RunState; startedAt: string; needsTap: boolean }
   | { name: 'exercise'; id: ID | null }
-  | { name: 'routine'; id: ID | null; kind: Routine['kind'] };
+  | { name: 'routine'; id: ID | null; kind: Routine['kind'] }
+  | { name: 'workout'; id: ID | null };
 
 function timelineFor(data: AppData, workoutId: ID) {
   const workout = data.workouts.find((w) => w.id === workoutId);
@@ -92,30 +94,35 @@ function MainApp() {
     );
   }
 
+  /** Start a workout. Must run inside a tap (iPhone rule: sound and screen-on need a tap). */
+  const startWorkout = (id: ID) => {
+    const found = timelineFor(data, id);
+    if (!found) return;
+    const { workout: w, timeline: t } = found;
+    unlockAudio();
+    startWakeLock(() => undefined);
+    const now = Date.now();
+    const run = start(t, now);
+    const startedAt = new Date(now).toISOString();
+    updateData((d) => ({
+      ...d,
+      activeSession: toActiveSession(run, w.id, startedAt),
+      workouts: d.workouts.map((x) => (x.id === w.id ? { ...x, lastUsedAt: startedAt } : x)),
+    }));
+    const cue = entryCue(t, 0, {
+      exerciseName: (exId) => (exId ? exercises.get(exId)?.name ?? '' : ''),
+      switchSides: () => false,
+      blockName: (i) => w.blocks[i]?.name ?? '',
+      countdownBeepsSec: data.settings.countdownBeepsSec,
+      tenSecondWarning: data.settings.tenSecondWarning,
+      halfwayCall: data.settings.halfwayCall,
+    });
+    if (cue) playCue(cue, { voice: data.settings.voiceOn, beeps: data.settings.beepsOn });
+    setNotice(undefined);
+    setView({ name: 'player', workoutId: w.id, run, startedAt, needsTap: false });
+  };
+
   if (view.name === 'start' && workout) {
-    const onStart = () => {
-      // All of this runs inside the tap (iPhone rule).
-      unlockAudio();
-      startWakeLock(() => undefined);
-      const now = Date.now();
-      const run = start(timeline, now);
-      const startedAt = new Date(now).toISOString();
-      updateData((d) => ({
-        ...d,
-        activeSession: toActiveSession(run, workout.id, startedAt),
-        workouts: d.workouts.map((w) => (w.id === workout.id ? { ...w, lastUsedAt: startedAt } : w)),
-      }));
-      const cue = entryCue(timeline, 0, {
-        exerciseName: (id) => (id ? exercises.get(id)?.name ?? '' : ''),
-        switchSides: () => false,
-        blockName: (i) => workout.blocks[i]?.name ?? '',
-        countdownBeepsSec: data.settings.countdownBeepsSec,
-        tenSecondWarning: data.settings.tenSecondWarning,
-        halfwayCall: data.settings.halfwayCall,
-      });
-      if (cue) playCue(cue, { voice: data.settings.voiceOn, beeps: data.settings.beepsOn });
-      setView({ name: 'player', workoutId: workout.id, run, startedAt, needsTap: false });
-    };
     return (
       <StartScreen
         workout={workout}
@@ -123,8 +130,25 @@ function MainApp() {
         routines={data.routines}
         exercises={exercises}
         notice={view.notice}
-        onStart={onStart}
+        onStart={() => startWorkout(workout.id)}
         onBack={home}
+        onEdit={() => setView({ name: 'workout', id: workout.id })}
+      />
+    );
+  }
+
+  if (view.name === 'workout') {
+    return (
+      <WorkoutEditor
+        key={view.id ?? 'new'}
+        id={view.id}
+        onDone={(savedId) => {
+          // Saved: show its start screen. Cancelled: back where we came from. Deleted: home.
+          const target = savedId ?? view.id;
+          if (target && getData().workouts.some((w) => w.id === target)) setView({ name: 'start', workoutId: target });
+          else home();
+        }}
+        onOpen={(id) => setView({ name: 'workout', id })}
       />
     );
   }
@@ -156,6 +180,8 @@ function MainApp() {
               setNotice(undefined);
               setView({ name: 'start', workoutId: id });
             }}
+            onNew={() => setView({ name: 'workout', id: null })}
+            onStart={startWorkout}
           />
         ) : (
           <LibraryScreen

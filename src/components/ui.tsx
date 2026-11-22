@@ -25,7 +25,7 @@ export function TopBar({ title, onBack, backLabel = 'Back', right }: {
 }
 
 /** A number with − and + buttons. */
-export function Stepper({ value, onChange, min, max, step = 5, unit = 's', label }: {
+export function Stepper({ value, onChange, min, max, step = 5, unit = 's', label, compact = false }: {
   value: number;
   onChange: (v: number) => void;
   min: number;
@@ -33,10 +33,12 @@ export function Stepper({ value, onChange, min, max, step = 5, unit = 's', label
   step?: number;
   unit?: string;
   label: string;
+  /** Smaller, so two fit side by side on a phone. */
+  compact?: boolean;
 }) {
   const set = (v: number) => onChange(Math.min(max, Math.max(min, v)));
   return (
-    <div className="stepper" role="group" aria-label={label}>
+    <div className={`stepper ${compact ? 'compact' : ''}`} role="group" aria-label={label}>
       <button className="step-btn" onClick={() => set(value - step)} disabled={value <= min} aria-label={`${label} minus ${step}`}>
         −
       </button>

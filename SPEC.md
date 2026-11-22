@@ -540,6 +540,14 @@ Commit to git at the end of each stage.
 - Workouts home, workout start screen, workout editor, exercise picker.
 - Live total time in the editor (uses `buildTimeline`).
 - **Done when** Jim builds a new workout from scratch in under 3 minutes and runs it.
+- Built 2026-11-22. Choices made to keep building fast:
+  - The picker adds several exercises at once (tap in order, then ADD). "Recent" = exercises
+    from the most recently used workouts, then Jim's own newest exercises.
+  - New exercises in a block copy the last exercise's work and rest (defaults 40 / 20 when empty).
+  - Each block has an "All exercises" work / rest control that sets every exercise in the block.
+  - The last exercise of a block has no rest control: the round rest, block rest or cool-down follows.
+  - Home: big START for the last-used workout (starts at once), list by most recently used.
+  - Default block names ("Block A", …) follow the block's place when blocks move or are removed.
 
 ### Stage 6 — Profiles, finish screen, history
 

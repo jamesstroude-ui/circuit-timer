@@ -265,4 +265,55 @@ button:disabled { opacity: 0.35; }
 .error { color: #ff8a8a; margin: 0 0 8px; font-weight: 600; }
 
 /* Start screen back link. */
-.st-back { margin: 0 0 4px -8px; align-self: flex-start; }
+.st-nav { display: flex; justify-content: space-between; margin: 0 -8px 4px; }
+.st-times { color: var(--muted); }
+
+/* Picker: picked rows show their order number. */
+.row-picked { box-shadow: inset 0 0 0 2px var(--ready-bg); }
+.pick-mark {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ready-bg);
+}
+.pick-mark.on { background: var(--ready-bg); border-color: var(--ready-bg); color: #000; font-size: 17px; }
+
+/* Workout editor. */
+.total-sticky { position: sticky; top: -12px; z-index: 2; box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5); }
+.total-sticky small { font-size: 15px; }
+.block-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+  border: 2px solid #2e2e2e;
+  border-radius: 14px;
+}
+.block-head { display: flex; gap: 6px; align-items: center; }
+.block-name { flex: 1; min-width: 0; font-weight: 800; }
+.pair { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.lab-step { display: flex; flex-direction: column; gap: 4px; }
+.mini-label { font-size: 15px; font-weight: 700; color: var(--muted); }
+.after-note { font-size: 15px; color: var(--muted); min-height: 48px; display: flex; align-items: center; }
+.all-stations { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #181818; }
+.item-head { align-items: center; }
+.item-name { flex: 1; min-width: 0; }
+.item-btns { display: flex; gap: 6px; }
+.stepper.compact .step-val { min-width: 46px; font-size: 18px; }
+.stepper.compact .step-val small { font-size: 13px; }
+
+/* Home: start the last workout. */
+.btn-start-last { min-height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.btn-start-last span { font-family: var(--font-display); font-size: 30px; letter-spacing: 0.1em; }
+.btn-start-last small { font-size: 17px; font-weight: 700; letter-spacing: 0; }
+/* Inside a block, exercises are rows, not cards, so Work and Rest fit side by side on a phone. */
+.block-card .item { background: transparent; border-radius: 0; padding: 10px 0 4px; border-top: 1px solid #2a2a2a; }
+.block-card .all-stations { background: transparent; padding: 8px 0 0; border-top: 1px solid #2a2a2a; border-radius: 0; }
+.block-card .pair { flex-wrap: nowrap; }

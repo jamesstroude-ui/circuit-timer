@@ -3,7 +3,9 @@ import { makeStarterData } from './starter';
 import {
   blankExercise, blankRoutine, cannotDeleteExercise, cannotDeleteRoutine, clampSec, deleteExercise,
   deleteRoutine, duplicateRoutine, exerciseUsage, moveItem, routineProblems, sameNameExercise,
-  saveExercise, saveRoutine, setExerciseHidden,
+  saveExercise, saveRoutine, setExerciseHidden, blankBlock, blankWorkout, blockName, deleteWorkout,
+  duplicateWorkout, lastUsedWorkout, newStations, recentExerciseIds, saveWorkout, setAllStations, sharedValue,
+  workoutProblems, workoutsByRecent, renameDefaultBlocks,
 } from './ops';
 
 describe('exercises', () => {
@@ -100,5 +102,81 @@ describe('helpers', () => {
     expect(clampSec(700, 5, 600)).toBe(600);
     expect(clampSec(42.6, 5, 600)).toBe(43);
     expect(clampSec(NaN, 5, 600)).toBe(5);
+  });
+});
+
+describe('workouts', () => {
+  const settings = makeStarterData().settings;
+
+  it('a new workout has one empty block and the default prepare time', () => {
+    const w = blankWorkout(settings);
+    expect(w.prepareSec).toBe(10);
+    expect(w.blocks).toHaveLength(1);
+    expect(w.blocks[0]).toMatchObject({ name: 'Block A', rounds: 3, restBetweenRoundsSec: 60, stations: [] });
+    expect(workoutProblems(w)).toEqual(['Give the workout a name.', 'Block A has no exercises.']);
+  });
+
+  it('new stations use the defaults, then copy the last station', () => {
+    let b = blankBlock(0);
+    b = { ...b, stations: newStations(b, ['push-up', 'plank'], settings) };
+    expect(b.stations.map((s) => [s.workSec, s.restSec])).toEqual([[40, 20], [40, 20]]);
+    b = setAllStations(b, { workSec: 45, restSec: 15 });
+    const more = newStations(b, ['burpee'], settings);
+    expect(more[0]).toMatchObject({ exerciseId: 'burpee', workSec: 45, restSec: 15 });
+    expect(new Set([...b.stations, ...more].map((s) => s.id)).size).toBe(3);
+  });
+
+  it('sharedValue is null when stations differ', () => {
+    let b = { ...blankBlock(0), stations: newStations(blankBlock(0), ['a', 'b'], settings) };
+    expect(sharedValue(b, 'workSec')).toBe(40);
+    b = { ...b, stations: [b.stations[0], { ...b.stations[1], workSec: 30 }] };
+    expect(sharedValue(b, 'workSec')).toBeNull();
+    expect(sharedValue(blankBlock(0), 'restSec')).toBeNull();
+  });
+
+  it('block names go A, B, C …', () => {
+    expect([0, 1, 25, 26].map(blockName)).toEqual(['Block A', 'Block B', 'Block Z', 'Block 27']);
+  });
+
+  it('saves, duplicates with new IDs, and deletes', () => {
+    let d = makeStarterData();
+    const { data, id } = duplicateWorkout(d, 'strength-pairs');
+    const copy = data.workouts.find((w) => w.id === id)!;
+    const orig = data.workouts.find((w) => w.id === 'strength-pairs')!;
+    expect(copy.name).toBe('Strength Pairs (copy)');
+    expect(copy.blocks[0].id).not.toBe(orig.blocks[0].id);
+    expect(copy.blocks[0].stations[0].id).not.toBe(orig.blocks[0].stations[0].id);
+    expect(copy.blocks[0].stations[0].exerciseId).toBe('goblet-squat');
+    d = saveWorkout(data, { ...copy, name: '  Mine  ' });
+    expect(d.workouts.find((w) => w.id === id)!.name).toBe('Mine');
+    expect(deleteWorkout(d, id).workouts.some((w) => w.id === id)).toBe(false);
+  });
+
+  it('cannot delete the running workout', () => {
+    const d = { ...makeStarterData(), activeSession: {
+      workoutId: 'tabata-x4', timelineIndex: 0, phaseEndsAt: 1, remainingMsWhenPaused: null, startedAt: '',
+    } };
+    expect(() => deleteWorkout(d, 'tabata-x4')).toThrow();
+  });
+
+  it('orders by last used, and finds recent exercises', () => {
+    let d = makeStarterData();
+    expect(lastUsedWorkout(d)).toBeUndefined();
+    expect(workoutsByRecent(d).map((w) => w.id)).toEqual(['full-body-starter', 'tabata-x4', 'strength-pairs']);
+    d = { ...d, workouts: d.workouts.map((w) => (w.id === 'tabata-x4' ? { ...w, lastUsedAt: '2026-11-22T10:00:00Z' } : w)) };
+    expect(lastUsedWorkout(d)?.id).toBe('tabata-x4');
+    expect(workoutsByRecent(d)[0].id).toBe('tabata-x4');
+    d = setExerciseHidden(d, 'squat-jump', true);
+    expect(recentExerciseIds(d)).toEqual(['burpee', 'kettlebell-swing', 'mountain-climbers']);
+    const own = { ...blankExercise(), name: 'Sled push' };
+    expect(recentExerciseIds(saveExercise(d, own))).toContain(own.id);
+  });
+});
+
+describe('renameDefaultBlocks', () => {
+  it('renames default names only', () => {
+    const b = (name: string) => ({ ...blankBlock(0), name });
+    const out = renameDefaultBlocks([b('Block C'), b('Legs'), b('Block A')]);
+    expect(out.map((x) => x.name)).toEqual(['Block A', 'Legs', 'Block C']);
   });
 });
