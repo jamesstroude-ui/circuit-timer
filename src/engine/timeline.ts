@@ -144,3 +144,14 @@ export function circuitSec(timeline: Phase[]): number {
     .filter((p) => p.kind === 'work' || REST_KINDS.includes(p.kind))
     .reduce((sum, p) => sum + p.durationSec, 0);
 }
+
+/**
+ * Time a warm-up or cool-down adds to a workout, as buildTimeline lays it out:
+ * a warm-up has gaps between items; a cool-down also has one gap before its first item.
+ */
+export function routineSec(routine: Routine): number {
+  const n = routine.items.length;
+  const items = routine.items.reduce((sum, it) => sum + it.workSec, 0);
+  const gaps = routine.kind === 'warmup' ? Math.max(0, n - 1) : n;
+  return items + gaps * routine.transitionSec;
+}

@@ -1,4 +1,4 @@
-// Workout start screen (Stage 3: one hard-coded workout). Start unlocks sound and
+// Workout start screen. Start unlocks sound and
 // screen-on inside the tap, and says the first cue (iPhone rule, SPEC 7 and 11).
 
 import type { Exercise, ID, Routine, Workout } from '../data/schema';
@@ -13,19 +13,26 @@ interface Props {
   exercises: Map<ID, Exercise>;
   notice?: string;
   onStart: () => void;
+  onBack?: () => void;
 }
 
 function sumSec(timeline: Phase[], section: Phase['section']): number {
-  return timeline.filter((p) => p.section === section).reduce((t, p) => t + p.durationSec, 0);
+  // Not the "Get ready" at the start: it belongs to the whole workout, not the warm-up.
+  return timeline.filter((p) => p.section === section && p.kind !== 'prepare').reduce((t, p) => t + p.durationSec, 0);
 }
 
-export function StartScreen({ workout, timeline, routines, exercises, notice, onStart }: Props) {
+export function StartScreen({ workout, timeline, routines, exercises, notice, onStart, onBack }: Props) {
   const total = timeline.reduce((t, p) => t + p.durationSec, 0);
   const warm = routines.find((r) => r.id === workout.warmupId);
   const cool = routines.find((r) => r.id === workout.cooldownId);
 
   return (
     <div className="start">
+      {onBack && (
+        <button className="link-btn st-back" onClick={onBack}>
+          ‹ Workouts
+        </button>
+      )}
       <header className="st-head">
         <h1>{workout.name}</h1>
         <div className="st-total">{clock(total)}</div>

@@ -44,7 +44,7 @@
 
 .controls { display: flex; justify-content: center; margin: 8px 0 20px; }
 
-.btn {
+.spike .btn {
   min-height: var(--tap-min);
   padding: 10px 16px;
   border-radius: 14px;
@@ -57,7 +57,7 @@
   -webkit-touch-callout: none;
   touch-action: manipulation;
 }
-.btn.primary {
+.spike .btn.primary {
   min-height: 80px;
   min-width: 220px;
   font-size: 28px;
@@ -66,9 +66,9 @@
   color: var(--bg);
   border-color: var(--fg);
 }
-.btn.small { font-size: 17px; flex: 1; }
-.btn.on { background: var(--fg); color: var(--bg); }
-.btn:disabled { opacity: 0.5; }
+.spike .btn.small { font-size: 17px; flex: 1; }
+.spike .btn.on { background: var(--fg); color: var(--bg); }
+.spike .btn:disabled { opacity: 0.5; }
 
 .checks {
   background: var(--panel);

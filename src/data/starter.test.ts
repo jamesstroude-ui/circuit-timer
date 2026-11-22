@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fullBodyStarter, starterExercises, starterRoutines } from './starter';
+import { fullBodyStarter, starterExercises, starterRoutines, starterWorkouts, strengthPairs, tabataX4 } from './starter';
 import { buildTimeline, circuitSec } from '../engine/timeline';
 
 describe('starter content (SPEC 9)', () => {
@@ -12,7 +12,7 @@ describe('starter content (SPEC 9)', () => {
 
   it('every routine and workout item points at a real exercise', () => {
     for (const r of starterRoutines) for (const item of r.items) expect(ids).toContain(item.exerciseId);
-    for (const b of fullBodyStarter.blocks) for (const s of b.stations) expect(ids).toContain(s.exerciseId);
+    for (const w of starterWorkouts) for (const b of w.blocks) for (const s of b.stations) expect(ids).toContain(s.exerciseId);
   });
 
   it('flags: goblet squat tracks load; step-up and leg swings switch sides', () => {
@@ -26,5 +26,15 @@ describe('starter content (SPEC 9)', () => {
 
   it('Full Body Starter circuit is 25:00', () => {
     expect(circuitSec(buildTimeline(fullBodyStarter, { routines: starterRoutines }))).toBe(1500);
+  });
+});
+
+describe('starter workouts match the SPEC 6.4 fixtures', () => {
+  const t = (w: typeof fullBodyStarter) => circuitSec(buildTimeline(w, { routines: starterRoutines }));
+  it('Tabata x4 circuit is 18:20', () => expect(t(tabataX4)).toBe(1100));
+  it('Strength Pairs circuit is 22:00', () => expect(t(strengthPairs)).toBe(1320));
+  it('all IDs are unique', () => {
+    const ids = starterWorkouts.flatMap((w) => [w.id, ...w.blocks.flatMap((b) => [b.id, ...b.stations.map((s) => s.id)])]);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

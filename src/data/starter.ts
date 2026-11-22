@@ -1,8 +1,8 @@
 // Starter content from SPEC Section 9. Built-in items use fixed, readable IDs
 // (for example "goblet-squat") so saved sessions and logs keep pointing at them.
-// Stage 3 uses this directly (hard-coded workout). Stage 4 loads it into storage.
+// The storage module copies this into the saved data on first run (src/data/store.ts).
 
-import type { Exercise, Routine, Settings, Workout } from './schema';
+import type { AppData, Block, Exercise, Profile, Routine, Settings, Workout } from './schema';
 
 type Row = [name: string, cue: string, equipment: Exercise['equipment'], flags?: string];
 
@@ -101,7 +101,21 @@ export const starterRoutines: Routine[] = [
   ]),
 ];
 
-/** The one workout Stage 3 plays (SPEC 9.4). */
+function block(
+  workoutId: string, letter: string, rounds: number, roundRest: number,
+  names: string[], workSec: number, restSec: number,
+): Block {
+  const id = `${workoutId}-${letter.toLowerCase()}`;
+  return {
+    id,
+    name: `Block ${letter}`,
+    rounds,
+    restBetweenRoundsSec: roundRest,
+    stations: names.map((ex, i) => ({ id: `${id}-${i + 1}`, exerciseId: slug(ex), workSec, restSec })),
+  };
+}
+
+/** SPEC 9.4. */
 export const fullBodyStarter: Workout = {
   id: 'full-body-starter',
   name: 'Full Body Starter',
@@ -110,18 +124,45 @@ export const fullBodyStarter: Workout = {
   restBetweenBlocksSec: 60,
   cooldownId: 'full-stretch',
   blocks: [
-    {
-      id: 'full-body-starter-a',
-      name: 'Block A',
-      rounds: 3,
-      restBetweenRoundsSec: 60,
-      stations: [
-        'Goblet squat', 'Push-up', 'Kettlebell swing', 'Bent-over row',
-        'Reverse lunge', 'Plank', 'Mountain climbers', 'Glute bridge',
-      ].map((ex, i) => ({ id: `full-body-starter-a-${i + 1}`, exerciseId: slug(ex), workSec: 40, restSec: 20 })),
-    },
+    block('full-body-starter', 'A', 3, 60, [
+      'Goblet squat', 'Push-up', 'Kettlebell swing', 'Bent-over row',
+      'Reverse lunge', 'Plank', 'Mountain climbers', 'Glute bridge',
+    ], 40, 20),
   ],
 };
+
+export const tabataX4: Workout = {
+  id: 'tabata-x4',
+  name: 'Tabata x4',
+  prepareSec: 10,
+  warmupId: 'quick-warmup',
+  restBetweenBlocksSec: 60,
+  cooldownId: 'quick-stretch',
+  // One station per block: the station rest is never used (the round rest is).
+  blocks: ['Burpee', 'Kettlebell swing', 'Mountain climbers', 'Squat jump'].map((ex, i) =>
+    block('tabata-x4', 'ABCD'[i], 8, 10, [ex], 20, 10),
+  ),
+};
+
+export const strengthPairs: Workout = {
+  id: 'strength-pairs',
+  name: 'Strength Pairs',
+  prepareSec: 10,
+  warmupId: 'general-warmup',
+  restBetweenBlocksSec: 90,
+  cooldownId: 'full-stretch',
+  blocks: [
+    block('strength-pairs', 'A', 3, 60, ['Goblet squat', 'Bent-over row', 'Push-up'], 45, 15),
+    block('strength-pairs', 'B', 3, 60, ['Romanian deadlift', 'Overhead press', 'Dead bug'], 45, 15),
+  ],
+};
+
+export const starterWorkouts: Workout[] = [fullBodyStarter, tabataX4, strengthPairs];
+
+export const starterProfiles: Profile[] = [
+  { id: 'profile-1', name: 'Jim', colour: '#FFB300' },
+  { id: 'profile-2', name: 'Son', colour: '#14B8A6' },
+];
 
 /** SPEC 5 defaults. Stage 7 makes these editable. */
 export const defaultSettings: Settings = {
@@ -136,3 +177,17 @@ export const defaultSettings: Settings = {
   halfwayCall: false,
   keepScreenOn: true,
 };
+
+/** A fresh copy of all starter content: what a new install saves on first run. */
+export function makeStarterData(): AppData {
+  const copy = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+  return {
+    schemaVersion: 1,
+    exercises: copy(starterExercises),
+    routines: copy(starterRoutines),
+    workouts: copy(starterWorkouts),
+    profiles: copy(starterProfiles),
+    logs: [],
+    settings: copy(defaultSettings),
+  };
+}

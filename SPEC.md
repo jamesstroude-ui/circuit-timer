@@ -523,6 +523,13 @@ Commit to git at the end of each stage.
 - Storage module, schema version, starter content from Section 9.
 - Library screens (exercises, warm-ups, cool-downs). Exercise editor. Routine editor.
 - **Done when** edits survive closing and reopening the app.
+- Built 2026-11-22, before the Stage 3 gym test (Jim's call: no gym for a week).
+  Notes: the storage module is `src/data/store.ts` (unreadable or older data is copied to a
+  `circuit-app-data-backup-…` key first, never deleted). The Stage 3 key `circuit-active-session`
+  moves into `AppData.activeSession`. Tabs: Workouts and Library only (History and Settings come
+  in Stages 6 and 7). The Workouts tab is a plain list of the saved workouts until Stage 5.
+  The routine editor includes a basic exercise picker (search, category, "+ New exercise");
+  Stage 5 adds "recent first". Confirms use the phone's own dialogs until Stage 7.
 
 ### Stage 5 — Workout builder
 

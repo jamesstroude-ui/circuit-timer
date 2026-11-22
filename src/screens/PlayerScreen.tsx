@@ -2,7 +2,7 @@
 // this screen only draws the state, runs the frame loop and handles taps.
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { Exercise, ID, Workout } from '../data/schema';
+import type { Exercise, ID, Settings, Workout } from '../data/schema';
 import type { Phase } from '../engine/timeline';
 import { REST_KINDS } from '../engine/timeline';
 import { entryCue, tickCues, type Cue, type CueContext } from '../engine/cues';
@@ -13,7 +13,6 @@ import {
 import { clearSession, saveSession } from '../data/sessionStore';
 import { hushVoice, playCue, releaseAudio, unlockAudio } from '../audio/cuePlayer';
 import { startWakeLock, stopWakeLock } from '../audio/wakeLock';
-import { defaultSettings } from '../data/starter';
 import { clock } from './format';
 import { IconBack, IconForward } from '../components/icons';
 import { HoldButton } from '../components/HoldButton';
@@ -23,6 +22,7 @@ export interface PlayerProps {
   workout: Workout;
   timeline: Phase[];
   exercises: Map<ID, Exercise>;
+  settings: Settings;
   initial: RunState;
   startedAt: string; // ISO
   /** After a reload the phone needs one tap before it may play sound or keep the screen on. */
@@ -42,14 +42,14 @@ function colourClass(p: Phase): string {
   return 'ph-ready'; // prepare, transition
 }
 
-export function PlayerScreen({ workout, timeline, exercises, initial, startedAt, needsTap, onExit }: PlayerProps) {
+export function PlayerScreen({ workout, timeline, exercises, settings, initial, startedAt, needsTap, onExit }: PlayerProps) {
   const run = useRef<RunState>(initial);
   const lastFrameAt = useRef(Date.now());
   const shownKey = useRef('');
   const [, redraw] = useReducer((x: number) => x + 1, 0);
 
-  const [voiceOn, setVoiceOn] = useState(defaultSettings.voiceOn);
-  const [beepsOn, setBeepsOn] = useState(defaultSettings.beepsOn);
+  const [voiceOn, setVoiceOn] = useState(settings.voiceOn);
+  const [beepsOn, setBeepsOn] = useState(settings.beepsOn);
   const [needTap, setNeedTap] = useState(needsTap);
   const sound = useRef({ allowed: !needsTap, voice: voiceOn, beeps: beepsOn });
   sound.current.voice = voiceOn;
@@ -60,11 +60,11 @@ export function PlayerScreen({ workout, timeline, exercises, initial, startedAt,
       exerciseName: (id) => (id ? exercises.get(id)?.name ?? '' : ''),
       switchSides: (id) => (id ? exercises.get(id)?.switchSides ?? false : false),
       blockName: (i) => workout.blocks[i]?.name ?? `Block ${i + 1}`,
-      countdownBeepsSec: defaultSettings.countdownBeepsSec,
-      tenSecondWarning: defaultSettings.tenSecondWarning,
-      halfwayCall: defaultSettings.halfwayCall,
+      countdownBeepsSec: settings.countdownBeepsSec,
+      tenSecondWarning: settings.tenSecondWarning,
+      halfwayCall: settings.halfwayCall,
     }),
-    [exercises, workout],
+    [exercises, workout, settings],
   );
 
   const play = useCallback((cue: Cue | null) => {

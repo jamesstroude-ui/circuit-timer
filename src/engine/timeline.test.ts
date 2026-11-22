@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTimeline, circuitSec, totalSec } from './timeline';
+import { buildTimeline, circuitSec, routineSec, totalSec } from './timeline';
 import { block, fullBodyStarter, routines, station, strengthPairs, tabataX4, workout } from './testFixtures';
 
 const data = { routines };
@@ -121,5 +121,26 @@ describe('next preview', () => {
     const t = buildTimeline(tabataX4(), data);
     const rr = t.find((p) => p.kind === 'roundRest')!;
     expect(rr.next?.exerciseId).toBe('burpee');
+  });
+});
+
+describe('routineSec', () => {
+  it('matches the warm-up and cool-down time in the built timeline', () => {
+    for (const r of routines) {
+      const w = workout({
+        prepareSec: 0,
+        warmupId: r.kind === 'warmup' ? r.id : null,
+        cooldownId: r.kind === 'cooldown' ? r.id : null,
+        blocks: [block('A', 1, 0, [station('x', 30, 0)])],
+      });
+      const t = buildTimeline(w, { routines });
+      const section = t.filter((p) => p.section === r.kind && p.kind !== 'done');
+      expect(routineSec(r)).toBe(section.reduce((s, p) => s + p.durationSec, 0));
+    }
+  });
+
+  it('is 0 for an empty routine', () => {
+    expect(routineSec({ id: 'e', kind: 'warmup', name: 'e', items: [], transitionSec: 5 })).toBe(0);
+    expect(routineSec({ id: 'e', kind: 'cooldown', name: 'e', items: [], transitionSec: 5 })).toBe(0);
   });
 });
