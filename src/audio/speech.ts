@@ -14,8 +14,15 @@ let log: Log = () => undefined;
 // Keep a reference until the utterance ends, so Safari does not drop its events.
 const live = new Set<SpeechSynthesisUtterance>();
 
+let endHook: () => void = () => undefined;
+
 export function setSpeechLog(fn: Log): void {
   log = fn;
+}
+
+/** Runs after each spoken line ends (used to wake the beep sound again). */
+export function setSpeechEndHook(fn: () => void): void {
+  endHook = fn;
 }
 
 export function speechSupported(): boolean {
@@ -86,9 +93,13 @@ function say(text: string): void {
     started = true;
     log(`Voice started: "${text}"`);
   };
-  u.onend = () => live.delete(u);
+  u.onend = () => {
+    live.delete(u);
+    endHook();
+  };
   u.onerror = (e) => {
     live.delete(u);
+    endHook();
     log(`Voice error: ${e.error}`);
   };
   live.add(u);

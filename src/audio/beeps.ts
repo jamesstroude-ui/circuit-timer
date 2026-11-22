@@ -54,7 +54,11 @@ function makeWavUrl(ms: number): string {
 export function unlockBeeps(): void {
   const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (AC) {
-    ctx ??= new AC();
+    if (!ctx) {
+      ctx = new AC();
+      const c = ctx;
+      c.onstatechange = () => log(`Web Audio: ${c.state}`);
+    }
     void ctx.resume();
     const silent = ctx.createBuffer(1, 1, 22_050);
     const src = ctx.createBufferSource();
@@ -81,9 +85,44 @@ export function unlockBeeps(): void {
   }
 }
 
+/**
+ * On the iPhone, speech puts Web Audio into "interrupted" and it does not come back
+ * by itself. Call this after each spoken line, so the next beep is ready.
+ */
+export function resumeAudio(): void {
+  if (ctx && ctx.state !== 'running') ctx.resume().catch(() => undefined);
+}
+
 function webAudioBeep(kind: BeepKind, delayMs: number): void {
-  if (!ctx) return;
-  if (ctx.state !== 'running') void ctx.resume();
+  if (!ctx) {
+    elementBeep(kind, delayMs);
+    return;
+  }
+  if (ctx.state === 'running') {
+    scheduleOsc(ctx, kind, delayMs);
+    return;
+  }
+  // Not running (interrupted by speech, or suspended). Try to wake it.
+  // If it is not awake in 250 ms, play this beep with the <audio> element instead.
+  const c = ctx;
+  let handled = false;
+  const fallback = window.setTimeout(() => {
+    if (handled) return;
+    handled = true;
+    log(`Web Audio ${c.state}: beep sent to audio element`);
+    elementBeep(kind, delayMs);
+  }, 250);
+  c.resume()
+    .then(() => {
+      if (handled) return;
+      handled = true;
+      window.clearTimeout(fallback);
+      scheduleOsc(c, kind, delayMs);
+    })
+    .catch(() => undefined);
+}
+
+function scheduleOsc(ctx: AudioContext, kind: BeepKind, delayMs: number): void {
   const t = ctx.currentTime + delayMs / 1000;
   const len = LEN_MS[kind] / 1000;
   const osc = ctx.createOscillator();

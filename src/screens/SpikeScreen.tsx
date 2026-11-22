@@ -3,8 +3,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cuesBetween, formatMs, loopState, type LoopState } from '../engine/spikeLoop';
-import { audioContextState, beep, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
-import { aussieVoices, cancelSpeech, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
+import { audioContextState, beep, resumeAudio, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
+import { aussieVoices, cancelSpeech, setSpeechEndHook, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
 import { startWakeLock, stopWakeLock, wakeLockSupported } from '../audio/wakeLock';
 import { keepAliveState, startKeepAlive, stopKeepAlive } from '../audio/keepAlive';
 import './spike.css';
@@ -43,13 +43,14 @@ export function SpikeScreen() {
   const testStopTimer = useRef(0);
 
   const addLog = useCallback((msg: string) => {
-    setLog((l) => [`${clock(Date.now())}  ${msg}`, ...l].slice(0, 30));
+    setLog((l) => [`${clock(Date.now())}  ${msg}`, ...l].slice(0, 120));
   }, []);
 
   // Speech and beeps report problems to the log.
   useEffect(() => {
     setSpeechLog(addLog);
     setBeepLog(addLog);
+    setSpeechEndHook(resumeAudio); // speech interrupts Web Audio on the iPhone
   }, [addLog]);
 
   // Online / offline and service worker status.
@@ -88,8 +89,9 @@ export function SpikeScreen() {
       for (const cue of cuesBetween(p.s, p.at, s, now)) {
         const m = methodRef.current;
         if (cue === 'countdown') beep(m, 'short');
-        if (cue === 'cycleStart') { speak('Go'); beep(m, 'long'); }
-        if (cue === 'done') { speak('Done. Well done.'); tripleBeep(m); }
+        // Beep first, then speak: speech interrupts Web Audio on the iPhone.
+        if (cue === 'cycleStart') { beep(m, 'long'); speak('Go'); }
+        if (cue === 'done') { tripleBeep(m); speak('Done. Well done.'); }
       }
     }
     prev.current = { s, at: now };
