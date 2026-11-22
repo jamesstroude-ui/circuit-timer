@@ -1,0 +1,40 @@
+/* Design tokens from SPEC §8.4. */
+:root {
+  --base: #111111;
+  --text: #ffffff;
+  --muted: #9a9a9a;
+  --panel: #1c1c1c;
+
+  --ready-bg: #ffb300;  --ready-fg: #000000;
+  --work-bg: #2bd96b;   --work-fg: #000000;
+  --rest-bg: #2f7bff;   --rest-fg: #ffffff;
+  --warmup-bg: #ff7a1a; --warmup-fg: #000000;
+  --cool-bg: #14b8a6;   --cool-fg: #000000;
+  --done-bg: #111111;   --done-fg: #ffffff;
+
+  --tap-player: 64px;
+  --tap-min: 48px;
+  --body: 17px;
+  --font-display: 'Bebas Neue', 'Oswald', 'Arial Narrow', 'Helvetica Neue', system-ui, sans-serif;
+  --font-body: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  background: var(--base);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--body);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
