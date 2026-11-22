@@ -1,10 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/tokens.css';
-import { SpikeScreen } from './screens/SpikeScreen';
+import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <SpikeScreen />
+    <App />
   </StrictMode>,
 );

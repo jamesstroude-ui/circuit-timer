@@ -165,6 +165,11 @@ export function beep(method: BeepMethod, kind: BeepKind, delayMs = 0): void {
   else elementBeep(kind, delayMs);
 }
 
+export function doubleBeep(method: BeepMethod): void {
+  beep(method, 'short', 0);
+  beep(method, 'short', 220);
+}
+
 export function tripleBeep(method: BeepMethod): void {
   beep(method, 'short', 0);
   beep(method, 'short', 250);

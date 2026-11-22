@@ -1,0 +1,182 @@
+/* Player (SPEC 8.3, 8.4). Whole background takes the phase colour. */
+
+.ph-ready  { --bg: var(--ready-bg);  --fg: var(--ready-fg); }
+.ph-work   { --bg: var(--work-bg);   --fg: var(--work-fg); }
+.ph-rest   { --bg: var(--rest-bg);   --fg: var(--rest-fg); }
+.ph-warmup { --bg: var(--warmup-bg); --fg: var(--warmup-fg); }
+.ph-cool   { --bg: var(--cool-bg);   --fg: var(--cool-fg); }
+.ph-done   { --bg: var(--done-bg);   --fg: var(--done-fg); }
+
+.player {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Header: section + total time left, then round / station. */
+.pl-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pl-section { font-weight: 800; letter-spacing: 0.06em; font-size: 18px; }
+.pl-where { font-size: 17px; font-weight: 600; margin-top: 2px; }
+.pl-left {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Middle: phase word, countdown, exercise. */
+.pl-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.pl-word {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(34px, 10vw, 64px);
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+.pl-count {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: min(34vh, 30vw);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.pl-upnext { font-size: 17px; font-weight: 800; letter-spacing: 0.12em; opacity: 0.85; margin-top: 4px; }
+.pl-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(30px, 8.5vw, 52px);
+  text-transform: uppercase;
+  line-height: 1.05;
+  margin-top: 4px;
+}
+.pl-cue { font-size: 20px; font-weight: 600; margin-top: 4px; min-height: 1.2em; }
+.pl-next {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 2px solid currentColor;
+  font-size: 20px;
+  font-weight: 700;
+}
+.pl-next-tag { font-weight: 800; letter-spacing: 0.1em; margin-right: 10px; }
+
+/* Controls: big targets (64 px min). */
+.pl-controls { display: flex; flex-direction: column; gap: 10px; }
+.pl-row { display: flex; gap: 10px; }
+.pl-btn {
+  min-height: var(--tap-player);
+  min-width: var(--tap-player);
+  border: 3px solid currentColor;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--fg);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.pl-pause {
+  flex: 1;
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  background: var(--fg);
+  color: var(--bg);
+}
+.pl-small { flex: 1; font-size: 17px; padding: 0 6px; }
+.pl-small.off { opacity: 0.55; }
+
+/* Press-and-hold END. */
+.hold { position: relative; overflow: hidden; }
+.hold-fill {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0.35;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.hold.holding .hold-fill { transform: scaleX(1); transition: transform var(--hold-ms) linear; }
+.hold-text { position: relative; display: flex; flex-direction: column; line-height: 1.1; }
+.hold-text small { font-size: 12px; font-weight: 600; opacity: 0.8; }
+
+/* After a reload: one tap turns sound back on. */
+.pl-overlay {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.94);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+.pl-overlay-big { font-family: var(--font-display); font-weight: 800; font-size: 44px; letter-spacing: 0.06em; }
+.pl-overlay-small { font-size: 18px; max-width: 28ch; }
+
+/* Done. */
+.pl-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+}
+.pl-done-line { font-size: 24px; font-weight: 700; margin: 0; }
+.pl-done-sub { font-size: 18px; margin: 0; opacity: 0.8; }
+.pl-primary {
+  margin-top: 16px;
+  min-height: 80px;
+  min-width: 240px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--ready-bg);
+  color: #000;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* Landscape (phone on its side): countdown left, name and next right. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .player { gap: 4px; }
+  .pl-main { flex-direction: row; align-items: center; gap: 16px; }
+  .pl-clockside { flex: 1.1; }
+  .pl-info { flex: 1; text-align: left; }
+  .pl-count { font-size: min(50vh, 24vw); }
+  .pl-word { font-size: clamp(28px, 9vh, 48px); }
+  .pl-name { font-size: clamp(26px, 9vh, 44px); }
+  .pl-controls { flex-direction: row; }
+  .pl-row { flex: 1; }
+  .pl-pause { font-size: 22px; }
+}

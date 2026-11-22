@@ -314,6 +314,13 @@ Unlock audio and speech inside the **Start** tap handler. iPhone blocks audio th
 Mute buttons for voice and beeps are on the player screen.
 Cancel queued speech when the user skips or pauses.
 
+Gaps filled in Stage 3 (code: `src/engine/cues.ts`):
+- First warm-up item: "Warm-up. {exercise}." Later warm-up and all cool-down items: "{exercise}."
+- Transition into the circuit: "Get ready. First: {exercise}." First transition into the cool-down: "Cool-down. First: {exercise}." Other transitions: silent (the screen shows "Up next").
+- "Switch sides." also works in warm-up and cool-down items. "Ten seconds." only in rests longer than 10 s.
+- After a skip, the new phase's cue plays. After the app was away (hidden, reload), missed cues do not play.
+- After a reload the player shows "Tap to continue": the clock keeps running, but the phone needs one tap before sound and screen-on work again.
+
 ---
 
 ## 8. Screens and design
