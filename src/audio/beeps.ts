@@ -90,7 +90,17 @@ export function unlockBeeps(): void {
  * by itself. Call this after each spoken line, so the next beep is ready.
  */
 export function resumeAudio(): void {
-  if (ctx && ctx.state !== 'running') ctx.resume().catch(() => undefined);
+  if (!ctx) return;
+  const c = ctx;
+  if (c.state !== 'running') {
+    c.resume().catch(() => undefined);
+    return;
+  }
+  // It can say "running" but play nothing after the voice. Switch it off and on again.
+  c.suspend()
+    .then(() => c.resume())
+    .then(() => log(`Beep sound restarted after voice (${c.state})`))
+    .catch((e: Error) => log(`Beep sound restart error: ${e.name}`));
 }
 
 function webAudioBeep(kind: BeepKind, delayMs: number): void {

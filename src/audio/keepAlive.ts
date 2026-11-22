@@ -6,6 +6,8 @@
 // It must start inside a tap (iPhone rule).
 
 let el: HTMLAudioElement | null = null;
+let wanted = false;
+let log: (msg: string) => void = () => undefined;
 
 function silentWavUrl(): string {
   const rate = 8_000;
@@ -21,10 +23,16 @@ function silentWavUrl(): string {
 }
 
 /** Call inside a tap. Safe to call again while it already plays. */
-export function startKeepAlive(log: (msg: string) => void): void {
+export function startKeepAlive(logFn: (msg: string) => void): void {
+  log = logFn;
+  wanted = true;
   if (!el) {
     el = new Audio(silentWavUrl());
     el.loop = true;
+    // The iPhone pauses it when it speaks. Log that, so we can see it happen.
+    el.addEventListener('pause', () => {
+      if (wanted) log('Keep-alive sound: stopped by iPhone');
+    });
   }
   if (!el.paused) return;
   el.play()
@@ -32,7 +40,16 @@ export function startKeepAlive(log: (msg: string) => void): void {
     .catch((e: Error) => log(`Keep-alive sound error: ${e.name}`));
 }
 
+/** After the voice speaks: start the silent loop again if the iPhone stopped it. */
+export function restartKeepAlive(): void {
+  if (!wanted || !el || !el.paused) return;
+  el.play()
+    .then(() => log('Keep-alive sound: restarted'))
+    .catch((e: Error) => log(`Keep-alive restart error: ${e.name}`));
+}
+
 export function stopKeepAlive(): void {
+  wanted = false;
   el?.pause();
 }
 

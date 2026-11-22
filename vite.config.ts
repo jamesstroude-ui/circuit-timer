@@ -5,8 +5,14 @@ import { VitePWA } from 'vite-plugin-pwa';
 // GitHub Pages serves the app from /circuit-timer/. Override with BASE=/ for other hosts.
 const base = process.env.BASE ?? '/circuit-timer/';
 
+// Shown in the app so Jim can see which version the phone runs. GITHUB_SHA is set by GitHub Actions.
+const appVersion = `${(process.env.GITHUB_SHA ?? 'local').slice(0, 7)} (${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC)`;
+
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   plugins: [
     react(),
     VitePWA({

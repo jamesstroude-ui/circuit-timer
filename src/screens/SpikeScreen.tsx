@@ -6,7 +6,7 @@ import { cuesBetween, formatMs, loopState, type LoopState } from '../engine/spik
 import { audioContextState, beep, resumeAudio, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
 import { aussieVoices, cancelSpeech, setSpeechEndHook, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
 import { startWakeLock, stopWakeLock, wakeLockSupported } from '../audio/wakeLock';
-import { keepAliveState, startKeepAlive, stopKeepAlive } from '../audio/keepAlive';
+import { keepAliveState, restartKeepAlive, startKeepAlive, stopKeepAlive } from '../audio/keepAlive';
 import './spike.css';
 
 const CFG = { cycleMs: 30_000, totalMs: 10 * 60_000 };
@@ -50,7 +50,11 @@ export function SpikeScreen() {
   useEffect(() => {
     setSpeechLog(addLog);
     setBeepLog(addLog);
-    setSpeechEndHook(resumeAudio); // speech interrupts Web Audio on the iPhone
+    // The voice stops the app's other sound on the iPhone. Start it again after each line.
+    setSpeechEndHook(() => {
+      restartKeepAlive();
+      resumeAudio();
+    });
   }, [addLog]);
 
   // Online / offline and service worker status.
@@ -182,6 +186,7 @@ export function SpikeScreen() {
           <button className="btn small" onClick={onTestVoice}>Test voice</button>
         </div>
         <dl>
+          <dt>App version</dt><dd>{__APP_VERSION__}</dd>
           <dt>Opened from home screen</dt><dd>{isStandalone() ? 'yes' : 'no (open from the home screen icon)'}</dd>
           <dt>Network</dt><dd>{online ? 'online' : 'offline'}</dd>
           <dt>Offline support</dt><dd>{swStatus}</dd>
