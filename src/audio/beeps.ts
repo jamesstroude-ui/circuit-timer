@@ -11,6 +11,14 @@ const LEN_MS: Record<BeepKind, number> = { short: 120, long: 450 };
 
 let ctx: AudioContext | null = null;
 const elements: Partial<Record<BeepKind, HTMLAudioElement>> = {};
+let elementsUnlocked = false;
+// Counts real beeps. The unlock step must not pause an element that a real beep just started.
+let playSeq = 0;
+let log: (msg: string) => void = () => undefined;
+
+export function setBeepLog(fn: (msg: string) => void): void {
+  log = fn;
+}
 
 /** iOS 17+: ask for "playback" audio so the ring/silent switch does not mute us. */
 export function setPlaybackSession(): string {
@@ -54,15 +62,22 @@ export function unlockBeeps(): void {
     src.connect(ctx.destination);
     src.start(0);
   }
+  // Unlock the <audio> elements once only. (Before, every tap re-ran this and
+  // its pause() could stop the beep that had just started.)
+  if (elementsUnlocked) return;
+  elementsUnlocked = true;
   for (const kind of ['short', 'long'] as BeepKind[]) {
-    if (!elements[kind]) {
-      const el = new Audio(makeWavUrl(LEN_MS[kind]));
-      el.preload = 'auto';
-      elements[kind] = el;
-    }
-    const el = elements[kind]!;
+    const el = new Audio(makeWavUrl(LEN_MS[kind]));
+    el.preload = 'auto';
+    elements[kind] = el;
+    const seq = playSeq;
     el.muted = true;
-    el.play().then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => { el.muted = false; });
+    el.play()
+      .then(() => {
+        if (playSeq === seq) { el.pause(); el.currentTime = 0; }
+        el.muted = false;
+      })
+      .catch((e: Error) => { el.muted = false; log(`Beep unlock error: ${e.name}`); });
   }
 }
 
@@ -87,8 +102,10 @@ function elementBeep(kind: BeepKind, delayMs: number): void {
   const play = () => {
     const el = elements[kind];
     if (!el) return;
+    playSeq++;
+    el.muted = false;
     el.currentTime = 0;
-    void el.play().catch(() => undefined);
+    el.play().catch((e: Error) => log(`Beep error: ${e.name}`));
   };
   if (delayMs > 0) window.setTimeout(play, delayMs);
   else play();

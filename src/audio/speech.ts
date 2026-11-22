@@ -1,26 +1,93 @@
 // Voice call-outs with the Web Speech API (built into Safari).
+//
+// iPhone notes (Stage 1 spike):
+//  - The first speak() must happen inside a tap. We speak the real words in the tap.
+//    (An earlier version spoke a blank " " utterance first. Safari can hang its queue on that.)
+//  - We pick an English voice on purpose. A "lang only" utterance can land on a voice
+//    that is not installed, and then nothing plays.
+//  - speak() right after cancel() can be dropped by Safari, so we wait a moment after a cancel.
+//  - Every utterance reports to the log: started, error, or "did not start".
+
+type Log = (msg: string) => void;
+
+let log: Log = () => undefined;
+// Keep a reference until the utterance ends, so Safari does not drop its events.
+const live = new Set<SpeechSynthesisUtterance>();
+
+export function setSpeechLog(fn: Log): void {
+  log = fn;
+}
 
 export function speechSupported(): boolean {
   return 'speechSynthesis' in window;
 }
 
-/** Call inside the Start tap. A silent utterance unlocks speech on iPhone. */
-export function unlockSpeech(): void {
-  if (!speechSupported()) return;
-  const u = new SpeechSynthesisUtterance(' ');
-  u.volume = 0;
-  window.speechSynthesis.speak(u);
+function norm(lang: string): string {
+  return lang.replace('_', '-').toLowerCase();
+}
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  const gb = voices.filter((v) => norm(v.lang) === 'en-gb');
+  const en = voices.filter((v) => norm(v.lang).startsWith('en'));
+  return (
+    gb.find((v) => v.localService) ??
+    gb[0] ??
+    en.find((v) => v.localService) ??
+    en[0] ??
+    voices.find((v) => v.default) ??
+    null
+  );
+}
+
+export function voiceName(): string {
+  if (!speechSupported()) return 'none';
+  const v = pickVoice();
+  return v ? `${v.name} (${v.lang})` : 'none found';
+}
+
+function say(text: string): void {
+  const synth = window.speechSynthesis;
+  if (synth.paused) synth.resume();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice();
+  if (v) {
+    u.voice = v;
+    u.lang = v.lang;
+  } else {
+    u.lang = 'en-GB';
+  }
+  u.rate = 1;
+  u.volume = 1;
+  let started = false;
+  u.onstart = () => {
+    started = true;
+    log(`Voice started: "${text}"`);
+  };
+  u.onend = () => live.delete(u);
+  u.onerror = (e) => {
+    live.delete(u);
+    log(`Voice error: ${e.error}`);
+  };
+  live.add(u);
+  synth.speak(u);
+  window.setTimeout(() => {
+    if (!started) {
+      log(`Voice did not start (speaking=${synth.speaking}, pending=${synth.pending}, paused=${synth.paused})`);
+    }
+  }, 2000);
 }
 
 /** interrupt = stop anything still being said first. */
 export function speak(text: string, interrupt = true): void {
   if (!speechSupported()) return;
   const synth = window.speechSynthesis;
-  if (interrupt) synth.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-GB';
-  u.rate = 1;
-  synth.speak(u);
+  if (interrupt && (synth.speaking || synth.pending)) {
+    synth.cancel();
+    window.setTimeout(() => say(text), 100);
+    return;
+  }
+  say(text);
 }
 
 export function cancelSpeech(): void {

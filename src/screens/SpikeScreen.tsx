@@ -3,8 +3,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cuesBetween, formatMs, loopState, type LoopState } from '../engine/spikeLoop';
-import { audioContextState, beep, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
-import { cancelSpeech, speak, speechSupported, unlockSpeech, voiceCount } from '../audio/speech';
+import { audioContextState, beep, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
+import { cancelSpeech, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
 import { startWakeLock, stopWakeLock, wakeLockSupported } from '../audio/wakeLock';
 import './spike.css';
 
@@ -41,6 +41,12 @@ export function SpikeScreen() {
   const addLog = useCallback((msg: string) => {
     setLog((l) => [`${clock(Date.now())}  ${msg}`, ...l].slice(0, 30));
   }, []);
+
+  // Speech and beeps report problems to the log.
+  useEffect(() => {
+    setSpeechLog(addLog);
+    setBeepLog(addLog);
+  }, [addLog]);
 
   // Online / offline and service worker status.
   useEffect(() => {
@@ -97,8 +103,7 @@ export function SpikeScreen() {
   const onStart = () => {
     setSessionStatus(setPlaybackSession());
     unlockBeeps();
-    unlockSpeech();
-    speak('Go', false);
+    speak('Go', false); // the first real words, inside the tap, unlock speech
     beep(method, 'long');
     startWakeLock((st) => { setWakeStatus(st); addLog(`Wake lock: ${st}`); });
 
@@ -121,7 +126,7 @@ export function SpikeScreen() {
   };
 
   const onTestBeep = () => { setSessionStatus(setPlaybackSession()); unlockBeeps(); beep(method, 'long'); };
-  const onTestVoice = () => { unlockSpeech(); speak('Testing. One, two, three.', false); };
+  const onTestVoice = () => { setSessionStatus(setPlaybackSession()); speak('Testing. One, two, three.'); };
 
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
@@ -167,6 +172,7 @@ export function SpikeScreen() {
           <dt>Audio session</dt><dd>{sessionStatus}</dd>
           <dt>Web Audio</dt><dd>{audioContextState()}</dd>
           <dt>Speech</dt><dd>{speechSupported() ? `yes (${voiceCount()} voices)` : 'not supported'}</dd>
+          <dt>Voice used</dt><dd>{voiceName()}</dd>
         </dl>
         <h2>Log</h2>
         <ol className="log">{log.length ? log.map((l, i) => <li key={i}>{l}</li>) : <li>No events yet.</li>}</ol>
