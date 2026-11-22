@@ -6,6 +6,7 @@ import { cuesBetween, formatMs, loopState, type LoopState } from '../engine/spik
 import { audioContextState, beep, setBeepLog, setPlaybackSession, tripleBeep, unlockBeeps, type BeepMethod } from '../audio/beeps';
 import { aussieVoices, cancelSpeech, setSpeechLog, speak, speechSupported, voiceCount, voiceName } from '../audio/speech';
 import { startWakeLock, stopWakeLock, wakeLockSupported } from '../audio/wakeLock';
+import { keepAliveState, startKeepAlive, stopKeepAlive } from '../audio/keepAlive';
 import './spike.css';
 
 const CFG = { cycleMs: 30_000, totalMs: 10 * 60_000 };
@@ -37,6 +38,9 @@ export function SpikeScreen() {
   const raf = useRef(0);
   const methodRef = useRef(method);
   methodRef.current = method;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const testStopTimer = useRef(0);
 
   const addLog = useCallback((msg: string) => {
     setLog((l) => [`${clock(Date.now())}  ${msg}`, ...l].slice(0, 30));
@@ -92,6 +96,8 @@ export function SpikeScreen() {
     setView(s);
     if (s.done) {
       setMode('done');
+      // Let "Done. Well done." finish before the keep-alive sound stops.
+      window.setTimeout(() => { if (modeRef.current !== 'running') stopKeepAlive(); }, 5000);
       stopWakeLock();
       addLog('Finished 10 minutes');
       return;
@@ -102,6 +108,7 @@ export function SpikeScreen() {
   // Everything audio-related happens inside this tap. iPhone requires it.
   const onStart = () => {
     setSessionStatus(setPlaybackSession());
+    startKeepAlive(addLog); // before speech, so the voice plays on silent
     unlockBeeps();
     speak('Go', false); // the first real words, inside the tap, unlock speech
     beep(method, 'long');
@@ -119,6 +126,7 @@ export function SpikeScreen() {
   const onStop = () => {
     cancelAnimationFrame(raf.current);
     cancelSpeech();
+    stopKeepAlive();
     stopWakeLock();
     addLog('Stopped');
     setMode('idle');
@@ -126,7 +134,14 @@ export function SpikeScreen() {
   };
 
   const onTestBeep = () => { setSessionStatus(setPlaybackSession()); unlockBeeps(); beep(method, 'long'); };
-  const onTestVoice = () => { setSessionStatus(setPlaybackSession()); speak('Testing. One, two, three.'); };
+  const onTestVoice = () => {
+    setSessionStatus(setPlaybackSession());
+    startKeepAlive(addLog);
+    speak('Testing. One, two, three.');
+    // Outside a run, stop the silent loop once the test sentence is done.
+    window.clearTimeout(testStopTimer.current);
+    testStopTimer.current = window.setTimeout(() => { if (modeRef.current !== 'running') stopKeepAlive(); }, 6000);
+  };
 
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
@@ -172,6 +187,7 @@ export function SpikeScreen() {
           <dt>Audio session</dt><dd>{sessionStatus}</dd>
           <dt>Web Audio</dt><dd>{audioContextState()}</dd>
           <dt>Speech</dt><dd>{speechSupported() ? `yes (${voiceCount()} voices)` : 'not supported'}</dd>
+          <dt>Keep-alive sound</dt><dd>{keepAliveState()}</dd>
           <dt>Voice used</dt><dd>{voiceName()}</dd>
           <dt>Aussie voices</dt><dd>{aussieVoices()}</dd>
         </dl>
